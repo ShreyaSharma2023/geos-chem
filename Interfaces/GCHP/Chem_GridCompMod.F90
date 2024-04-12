@@ -61,6 +61,7 @@ MODULE Chem_GridCompMod
   USE State_Grid_Mod                                 ! Grid State obj
   USE State_Met_Mod                                  ! Meteorology State obj
   USE Species_Mod,   ONLY : Species
+  USE Sulfate_Mod
 
 #if defined( MODEL_GEOS )
   USE Chem_Mod                            ! Chemistry Base Class (chem_mie?)
@@ -476,7 +477,7 @@ CONTAINS
 
 #if defined( MODEL_GEOS )
     ! Check if species are friendly to moist
-    CALL ESMF_ConfigGetAttribute( myState%myCF, DoIt, &
+
                                   Label = "Species_friendly_to_moist:",&
                                   Default = 0, &
                                   __RC__ )
@@ -927,6 +928,58 @@ CONTAINS
                                                  __RC__  )
 #endif
 
+! Adding specs for MAM
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'SO2_MAM',                             &
+           LONG_NAME          = 'SO2 exported to MAM',                 &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'H2SO4_MAM',                           &
+           LONG_NAME          = 'H2SO4 exported to MAM',               &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'DELP_MAM',                            &
+           LONG_NAME          = 'Delta dry pressure across box',       &
+           UNITS              = 'hPa',                                 &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'PLE_MAM',                             &
+           LONG_NAME          = 'Pressure level edges',                &
+           UNITS              = 'Pa',                                  &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'AIRDENS_MAM',                         &
+           LONG_NAME          = 'Dry air density',                     &
+           UNITS              = 'kgm-3',                               &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+
+     call MAPL_AddInternalSpec(GC, &
+          SHORT_NAME         = 'AIRDENS',                              &
+          LONG_NAME          = 'Dry air density from StateMetMod?',    &
+          UNITS              = 'kgm-3',                                &
+          DIMS               = MAPL_DimsHorzVert,                      &
+          VLOCATION          = MAPL_VLocationCenter,                   &
+          PRECISION          = ESMF_KIND_R8,                           &
+          FRIENDLYTO         = trim(COMP_NAME),                        &
+                                                      RC=STATUS  )
+       _VERIFY(STATUS)
+
+
+
+
 !
 ! !EXTERNAL STATE:
 !
@@ -1108,6 +1161,7 @@ CONTAINS
 
     INTEGER                      :: I, J, nFlds, mpiComm
     TYPE(ESMF_STATE)             :: INTSTATE
+    TYPE(ESMF_STATE)             :: EXPSTATE
     TYPE(ESMF_Field)             :: GcFld
 
     ! Species information
@@ -1185,6 +1239,9 @@ CONTAINS
 
     ! Get Internal state.
     CALL MAPL_Get ( STATE, INTERNAL_ESMF_STATE=INTSTATE, __RC__ )
+
+    ! Get Export state.
+!    CALL MAPL_Get ( STATE, EXPORT_ESMF_STATE=EXPSTATE, __RC__ )
 
     ! Initialize GEOS-Chem Input_Opt fields to zeros or equivalent
     CALL Set_Input_Opt( MAPL_am_I_Root(), Input_Opt, RC )
@@ -2042,6 +2099,7 @@ CONTAINS
     REAL, POINTER                :: Ptr3d   (:,:,:) => NULL()
     REAL(ESMF_KIND_R8), POINTER  :: Ptr2d_R8(:,:)   => NULL()
     REAL(ESMF_KIND_R8), POINTER  :: Ptr3d_R8(:,:,:) => NULL()
+    REAL(ESMF_KIND_R4), POINTER  :: Ptr3d_R4(:,:,:) => NULL()
 
     ! Other pointer arrays
     REAL(ESMF_KIND_R4),  POINTER :: lonCtr  (:,:) ! Lon centers, this PET [rad]
@@ -2534,7 +2592,7 @@ CONTAINS
              State_Chm%SO2AfterChem = Ptr3d_R8(:,:,State_Grid%NZ:1:-1)
           ENDIF
           Ptr3d_R8 => NULL()
-
+         
           CALL MAPL_GetPointer( INTSTATE, Ptr2d_R8, 'DryDepNitrogen', notFoundOK=.TRUE., __RC__ )
           IF ( ASSOCIATED(Ptr2d_R8) .AND. ASSOCIATED(State_Chm%DryDepNitrogen) ) THEN
              State_Chm%DryDepNitrogen = Ptr2d_R8
@@ -3083,6 +3141,57 @@ CONTAINS
     HcoState%IMPORT   => NULL()
     HcoState%EXPORT   => NULL()
 #endif
+
+! Equating pointers for MAM
+print *, "!Preparing fields for MAM" 
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SO2AfterChem',            __RC__ )
+print *, "Got the SO2AfterChem pointer"
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SO2_MAM',  alloc=.True.,  __RC__ )
+print *, "Got the SO2_MAM pointer"
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
+print *, "Equated the pointers"
+    print *, "SO2_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'DELP_DRY',            __RC__ )
+print *, "Got the DELP_DRY pointer"
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'DELP_MAM',  alloc=.True.,  __RC__ )
+print *, "Got the DELP_MAM pointer"
+    Ptr3d_R4(:,:,:) = 0.0d0
+print *, "Equated the pointers"
+    print *, "DELP_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+    CALL MAPL_GetPointer( IMPORT, Ptr3d_R8, 'PLE',            __RC__ )
+print *, "Got the PLE pointer"
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'PLE_MAM',  alloc=.True.,  __RC__ )
+print *, "Got the PLE_MAM pointer"
+    Ptr3d_R4(:,:,:) = 124.0d0
+print *, "Equated the pointers"
+    print *, "PLE_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'AIRDENS',            __RC__ )
+print *, "Got the AIRDENS pointer"
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'AIRDENS_MAM',  alloc=.True.,  __RC__ )
+print *, "Got the AIRDENS_MAM pointer"
+    Ptr3d_R4(:,:,:) = 0.217d0
+print *, "Equated the pointers"
+    print *, "AIRDENS_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'H2SO4_MAM',  alloc=.True.,  __RC__ )
+print *, "H2SO4_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
+    Ptr3d_R4 => NULL()
+print *, "!Completed Preparing fields for MAM"
+    
+
+
 
     ! Successful return
     _RETURN(ESMF_SUCCESS)

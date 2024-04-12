@@ -2453,6 +2453,7 @@ CONTAINS
     REAL(fp)              :: PSO4d_tot, PNITd_tot
     REAL(fp)              :: SO2_gas,   PH2SO4d_tot
     REAL(fp)              :: H2SO4_cd,  H2SO4_gas
+    REAL(fp)              :: H2SO4_MAM
 
     ! (qjc, 04/10/16)
     REAL(fp)              :: L5,L5S,SRo3,SRhobr
@@ -4829,6 +4830,7 @@ CONTAINS
                                                      !  each size bin
     REAL(fp),       INTENT(OUT)   :: H2SO4_gas       ! H2SO4 mixing ratio
                                                      !  after dust chem [v/v]
+    REAL(fp)                      :: H2SO4_MAM       ! H2SO4 exported to MAM
     REAL(fp),       INTENT(OUT)   :: PNITd (NDSTBIN) ! Nitrate produced by
                                                      !  HNO3 uptake on dust
                                                      !  in each size bin
@@ -5217,6 +5219,8 @@ CONTAINS
     H2SO4_gas       = H2SO4_new * 0.098e+0_fp * ( AIRMW &
                       / 98.e+0_fp ) / AD(I,J,L) / 2.0e+0_fp ! Hard-coded MW
     H2SO4_gas       = MAX( H2SO4_gas, MINDAT )
+
+    H2SO4_MAM = H2SO4_gas
 
     !-------------------
     ! Nitrate production
