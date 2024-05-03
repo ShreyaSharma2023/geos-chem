@@ -2114,6 +2114,8 @@ CONTAINS
          metId      = metId,                                                 &
          Ptr2Data   = State_Met%DELP,                                        &
          RC         = RC                                                    )
+    
+    write(*,*) "I am in state_met_mod"
 
     IF ( RC /= GC_SUCCESS ) THEN
        errMsg = TRIM( errMsg_ir ) // TRIM( metId )
@@ -6997,6 +6999,8 @@ CONTAINS
        CALL GC_Error( ErrMsg, RC, ThisLoc )
        RETURN
     ENDIF
+    
+    write(*,*) "I am in state_met_mod"
 
     !========================================================================
     ! If there is an Olson landtype dimension,

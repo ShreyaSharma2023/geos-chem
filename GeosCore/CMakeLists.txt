@@ -41,6 +41,7 @@ add_library(GeosCore
   aero_drydep.F90
   aerosol_mod.F90
   airs_ch4_mod.F90
+#  $<$<BOOL:${BUILTIN_AEROSOLS}>:carbon_mod.F90>
   carbon_mod.F90
   carbon_gases_mod.F90
   chemistry_mod.F90

@@ -346,7 +346,9 @@ CONTAINS
 
        ! Pressure difference between top & bottom edges [hPa]
        State_Met%DELP(I,J,L) = State_Met%PEDGE(I,J,L) - PEdge_Top
-
+       
+       write(*,*) "I am in calc_met_mod"
+       
        ! Arithmetic average pressure in grid box [hPa] defined as
        ! ( PEDGE(L) + PEDGE(L+1) ) / 2. This represents the grid box
        ! mass centroid pressure. Use in the ideal gas law yields

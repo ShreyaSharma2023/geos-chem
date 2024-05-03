@@ -143,7 +143,10 @@ CONTAINS
 !
 ! !USES:
 !   
+#ifdef BUILTIN_AEROSOLS
     USE CARBON_MOD,            ONLY : EmissCarbon
+#endif
+
     USE Carbon_Gases_Mod,      ONLY : Emiss_Carbon_Gases
     USE CO2_MOD,               ONLY : EmissCO2
     USE ErrCode_Mod
@@ -212,6 +215,7 @@ CONTAINS
     ! Exit if Phase 0 or 1, or if it is a GEOS-Chem dry-run
     IF ( ( Phase == 1 ) .or. ( Phase == 0 ) .or. Input_Opt%DryRun ) RETURN
 
+#ifdef BUILTIN_AEROSOLS
     ! Call carbon emissions module to make sure that sesquiterpene
     ! emissions calculated in HEMCO (SESQ) are passed to the internal
     ! species array in carbon, as well as to ensure that POA emissions
@@ -227,6 +231,7 @@ CONTAINS
           RETURN
        ENDIF
     ENDIF
+#endif
 
 #ifdef TOMAS
     ! Call TOMAS emission routines (JKodros 6/2/15)
