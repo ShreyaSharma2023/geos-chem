@@ -60,7 +60,7 @@ MODULE Chem_GridCompMod
   USE State_Diag_Mod                                 ! Diagnostics State obj
   USE State_Grid_Mod                                 ! Grid State obj
   USE State_Met_Mod                                  ! Meteorology State obj
-  USE Species_Mod,   ONLY : Species
+  USE Species_Mod,   ONLY : Species, SpcConc
   USE Sulfate_Mod
 
 #if defined( MODEL_GEOS )
@@ -138,6 +138,7 @@ MODULE Chem_GridCompMod
   TYPE(ConfigObj),        POINTER  :: HcoConfig
   CLASS(Logger),          POINTER  :: lgr => null()
   LOGICAL                          :: meteorology_vertical_index_is_top_down
+  TYPE(SpcConc), POINTER :: Spc(:)
 
 #if defined( MODEL_GEOS )
   ! Is GEOS-Chem the provider for AERO, RATS, and/or Analysis OX?
@@ -936,13 +937,38 @@ CONTAINS
            DIMS               = MAPL_DimsHorzVert,                     &
            VLOCATION          = MAPL_VLocationCenter,                  &
                                                  __RC__  )
+
      call MAPL_AddExportSpec(GC,                                       &
-           SHORT_NAME         = 'H2SO4_MAM',                           &
-           LONG_NAME          = 'H2SO4 exported to MAM',               &
+           SHORT_NAME         = 'SO2_MAM2',                            &
+           LONG_NAME          = 'SO2 gas exported to MAM',                 &
            UNITS              = 'vv-1',                                &
            DIMS               = MAPL_DimsHorzVert,                     &
            VLOCATION          = MAPL_VLocationCenter,                  &
                                                  __RC__  )
+           
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'H2SO4_MAM',                           &
+           LONG_NAME          = 'SO4 exported to MAM',               &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'NH3_MAM',                           &
+           LONG_NAME          = 'NH3 exported to MAM',               &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'SOA_MAM',                           &
+           LONG_NAME          = 'SOA exported to MAM',               &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+
      call MAPL_AddExportSpec(GC,                                       &
            SHORT_NAME         = 'DELP_MAM',                            &
            LONG_NAME          = 'Delta dry pressure across box',       &
@@ -2575,6 +2601,8 @@ CONTAINS
              ThisSpc => NULL()
           ENDDO
        ENDIF
+       
+       Spc                  => State_Chm%Species  ! Chemistry species [kg]
 
        !=======================================================================
        ! On first call, initialize certain State_Chm and State_Met arrays from
@@ -2592,7 +2620,7 @@ CONTAINS
              State_Chm%SO2AfterChem = Ptr3d_R8(:,:,State_Grid%NZ:1:-1)
           ENDIF
           Ptr3d_R8 => NULL()
-         
+        
           CALL MAPL_GetPointer( INTSTATE, Ptr2d_R8, 'DryDepNitrogen', notFoundOK=.TRUE., __RC__ )
           IF ( ASSOCIATED(Ptr2d_R8) .AND. ASSOCIATED(State_Chm%DryDepNitrogen) ) THEN
              State_Chm%DryDepNitrogen = Ptr2d_R8
@@ -2995,7 +3023,7 @@ CONTAINS
           Ptr3d_R8(:,:,State_Grid%NZ:1:-1) = State_Chm%SO2AfterChem
        ENDIF
        Ptr3d_R8 => NULL()
-
+       
        CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'KPPHvalue', &
                              notFoundOK=.TRUE., __RC__ )
        IF (ASSOCIATED(Ptr3d_R8) .AND. ASSOCIATED(State_Chm%KPPHvalue)) THEN
@@ -3154,6 +3182,30 @@ print *, "Equated the pointers"
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
 
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_SO2',   __RC__)
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SO2_MAM2',  alloc=.True.,  __RC__ )
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_SO4',   __RC__)
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'H2SO4_MAM',  alloc=.True.,  __RC__ )
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_NH3',   __RC__)
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'NH3_MAM',  alloc=.True.,  __RC__ )
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_SOAP',   __RC__)
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SOA_MAM',  alloc=.True.,  __RC__ )
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
 CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'DELP_DRY',            __RC__ )
 print *, "Got the DELP_DRY pointer"
     CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'DELP_MAM',  alloc=.True.,  __RC__ )
@@ -3183,15 +3235,6 @@ print *, "Equated the pointers"
     print *, "AIRDENS_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
-
-
-    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'H2SO4_MAM',  alloc=.True.,  __RC__ )
-print *, "H2SO4_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
-    Ptr3d_R4 => NULL()
-print *, "!Completed Preparing fields for MAM"
-    
-
-
 
     ! Successful return
     _RETURN(ESMF_SUCCESS)
