@@ -60,7 +60,7 @@ MODULE Chem_GridCompMod
   USE State_Diag_Mod                                 ! Diagnostics State obj
   USE State_Grid_Mod                                 ! Grid State obj
   USE State_Met_Mod                                  ! Meteorology State obj
-  USE Species_Mod,   ONLY : Species, SpcConc
+  USE Species_Mod,   ONLY : Species
   USE Sulfate_Mod
 
 #if defined( MODEL_GEOS )
@@ -138,7 +138,6 @@ MODULE Chem_GridCompMod
   TYPE(ConfigObj),        POINTER  :: HcoConfig
   CLASS(Logger),          POINTER  :: lgr => null()
   LOGICAL                          :: meteorology_vertical_index_is_top_down
-  TYPE(SpcConc), POINTER :: Spc(:)
 
 #if defined( MODEL_GEOS )
   ! Is GEOS-Chem the provider for AERO, RATS, and/or Analysis OX?
@@ -776,6 +775,17 @@ CONTAINS
     _VERIFY(STATUS)
 
     call MAPL_AddInternalSpec(GC, &
+       SHORT_NAME         = 'H2SO4_PRDR',  &
+       LONG_NAME          = 'Production rate of H2SO4',  &
+       UNITS              = 'vv-1', &
+       DIMS               = MAPL_DimsHorzVert,    &
+       VLOCATION          = MAPL_VLocationCenter,    &
+       PRECISION          = ESMF_KIND_R8, &
+       FRIENDLYTO         = trim(COMP_NAME),    &
+                                                      RC=STATUS  )
+    _VERIFY(STATUS)
+
+    call MAPL_AddInternalSpec(GC, &
        SHORT_NAME         = 'KPPHvalue',  &
        LONG_NAME          = 'HSAVE for KPP',  &
        UNITS              = '1', &
@@ -963,6 +973,14 @@ CONTAINS
                                                  __RC__  )
      call MAPL_AddExportSpec(GC,                                       &
            SHORT_NAME         = 'SOA_MAM',                           &
+           LONG_NAME          = 'SOA exported to MAM',               &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'H2SO4_PRDR_MAM',                           &
            LONG_NAME          = 'SOA exported to MAM',               &
            UNITS              = 'vv-1',                                &
            DIMS               = MAPL_DimsHorzVert,                     &
@@ -2602,8 +2620,6 @@ CONTAINS
           ENDDO
        ENDIF
        
-       Spc                  => State_Chm%Species  ! Chemistry species [kg]
-
        !=======================================================================
        ! On first call, initialize certain State_Chm and State_Met arrays from
        ! imports if they are found (ewl, 12/13/18)
@@ -2621,6 +2637,12 @@ CONTAINS
           ENDIF
           Ptr3d_R8 => NULL()
         
+          CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'H2SO4_PRDR', notFoundOK=.TRUE., __RC__ )
+          IF ( ASSOCIATED(Ptr3d_R8) .AND. ASSOCIATED(State_Chm%H2SO4_PRDR) ) THEN
+             State_Chm%H2SO4_PRDR = Ptr3d_R8(:,:,State_Grid%NZ:1:-1)
+          ENDIF
+          Ptr3d_R8 => NULL()
+
           CALL MAPL_GetPointer( INTSTATE, Ptr2d_R8, 'DryDepNitrogen', notFoundOK=.TRUE., __RC__ )
           IF ( ASSOCIATED(Ptr2d_R8) .AND. ASSOCIATED(State_Chm%DryDepNitrogen) ) THEN
              State_Chm%DryDepNitrogen = Ptr2d_R8
@@ -3017,10 +3039,10 @@ CONTAINS
        ENDIF
        Ptr3d_R8 => NULL()
 
-       CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SO2AfterChem', &
+       CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'H2SO4_PRDR', &
                              notFoundOK=.TRUE., __RC__ )
-       IF (ASSOCIATED(Ptr3d_R8) .AND. ASSOCIATED(State_Chm%SO2AfterChem)) THEN
-          Ptr3d_R8(:,:,State_Grid%NZ:1:-1) = State_Chm%SO2AfterChem
+       IF (ASSOCIATED(Ptr3d_R8) .AND. ASSOCIATED(State_Chm%H2SO4_PRDR)) THEN
+          Ptr3d_R8(:,:,State_Grid%NZ:1:-1) = State_Chm%H2SO4_PRDR
        ENDIF
        Ptr3d_R8 => NULL()
        
@@ -3202,6 +3224,12 @@ print *, "Equated the pointers"
 
     CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_SOAP',   __RC__)
     CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SOA_MAM',  alloc=.True.,  __RC__ )
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'H2SO4_PRDR',   __RC__)
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'H2SO4_PRDR_MAM',  alloc=.True.,  __RC__ )
     Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()

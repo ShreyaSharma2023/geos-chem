@@ -1350,7 +1350,7 @@ CONTAINS
 #endif
 #endif
 
-#ifdef MODEL_CESM
+!#ifdef MODEL_CESM
        ! Calculate H2SO4 production rate for coupling to CESM (interface to MAM4 nucleation)
        DO F = 1, NFAM
 
@@ -1371,7 +1371,7 @@ CONTAINS
              ENDIF
           ENDIF
        ENDDO
-#endif
+!#endif
 
 #ifdef MODEL_GEOS
        !--------------------------------------------------------------------

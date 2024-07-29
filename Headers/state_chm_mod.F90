@@ -308,12 +308,12 @@ MODULE State_Chm_Mod
      LOGICAL                    :: Do_SulfateMod_Cld
      LOGICAL                    :: Do_SulfateMod_SeaSalt
 
-#if defined(MODEL_CESM)
+!#if defined(MODEL_CESM)
      !-----------------------------------------------------------------------
      ! Fields for CESM interface to GEOS-Chem
      !-----------------------------------------------------------------------
      REAL(fp),          POINTER :: H2SO4_PRDR (:,:,:  ) ! H2SO4 prod rate [mol/mol]
-#endif
+!#endif
 
      !-----------------------------------------------------------------------
      ! Fields for CH4 specialty simulation
@@ -598,10 +598,10 @@ CONTAINS
     State_Chm%CH2O_aq           => NULL()
     State_Chm%rlam              => NULL()
 #endif
-#ifdef MODEL_CESM
+!#ifdef MODEL_CESM
     ! Add quantities for coupling to CESM
     State_Chm%H2SO4_PRDR        => NULL()
-#endif
+!#endif
 
   END SUBROUTINE Zero_State_Chm
 !EOC
@@ -2160,7 +2160,7 @@ CONTAINS
        RETURN
     ENDIF
 
-#if defined(MODEL_CESM)
+!#if defined(MODEL_CESM)
     IF ( Input_Opt%ITS_A_FULLCHEM_SIM ) THEN
        !---------------------------------------------------------------------
        ! H2SO4_PRDR: H2SO4 production rate [mol/mol] for MAM4 interface
@@ -2180,7 +2180,7 @@ CONTAINS
           RETURN
        ENDIF
     ENDIF
-#endif
+!#endif
 
     !=======================================================================
     ! Initialize State_Chm quantities pertinent to Hg simulations
@@ -3569,14 +3569,14 @@ CONTAINS
        State_Chm%TOMS2 => NULL()
     ENDIF
 
-#if defined(MODEL_CESM)
+!#if defined(MODEL_CESM)
     IF ( ASSOCIATED( State_Chm%H2SO4_PRDR ) ) THEN
        DEALLOCATE( State_Chm%H2SO4_PRDR, STAT=RC )
        CALL GC_CheckVar( 'State_Chm%H2SO4_PRDR', 2, RC )
        IF ( RC /= GC_SUCCESS ) RETURN
        State_Chm%H2SO4_PRDR => NULL()
     ENDIF
-#endif
+!#endif
 
     IF ( ASSOCIATED( State_Chm%RAD_AER ) ) THEN
        DEALLOCATE( State_Chm%RAD_AER, STAT=RC )
@@ -4646,12 +4646,12 @@ CONTAINS
           IF ( isUnits ) Units = '1'
           IF ( isRank  ) Rank  = 3
 
-#if defined(MODEL_CESM)
+!#if defined(MODEL_CESM)
        CASE( 'H2SO4_PRDR' )
           IF ( isDesc  ) Desc  = 'H2SO4 production rate in timestep'
           IF ( isUnits ) Units = 'mol mol-1'
           IF ( isRank  ) Rank  = 3
-#endif
+!#endif
 
        CASE DEFAULT
           Found = .False.
