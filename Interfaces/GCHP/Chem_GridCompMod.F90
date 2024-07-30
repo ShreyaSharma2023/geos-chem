@@ -950,7 +950,7 @@ CONTAINS
 
      call MAPL_AddExportSpec(GC,                                       &
            SHORT_NAME         = 'SO2_MAM2',                            &
-           LONG_NAME          = 'SO2 gas exported to MAM',                 &
+           LONG_NAME          = 'SO2 gas exported to MAM',             &
            UNITS              = 'vv-1',                                &
            DIMS               = MAPL_DimsHorzVert,                     &
            VLOCATION          = MAPL_VLocationCenter,                  &
@@ -958,30 +958,38 @@ CONTAINS
            
      call MAPL_AddExportSpec(GC,                                       &
            SHORT_NAME         = 'H2SO4_MAM',                           &
-           LONG_NAME          = 'SO4 exported to MAM',               &
+           LONG_NAME          = 'SO4 exported to MAM',                 &
            UNITS              = 'vv-1',                                &
            DIMS               = MAPL_DimsHorzVert,                     &
            VLOCATION          = MAPL_VLocationCenter,                  &
                                                  __RC__  )
 
      call MAPL_AddExportSpec(GC,                                       &
-           SHORT_NAME         = 'NH3_MAM',                           &
-           LONG_NAME          = 'NH3 exported to MAM',               &
+           SHORT_NAME         = 'NH3_MAM',                             &
+           LONG_NAME          = 'NH3 exported to MAM',                 &
            UNITS              = 'vv-1',                                &
            DIMS               = MAPL_DimsHorzVert,                     &
            VLOCATION          = MAPL_VLocationCenter,                  &
                                                  __RC__  )
      call MAPL_AddExportSpec(GC,                                       &
-           SHORT_NAME         = 'SOA_MAM',                           &
-           LONG_NAME          = 'SOA exported to MAM',               &
+           SHORT_NAME         = 'SOA_MAM',                             &
+           LONG_NAME          = 'SOA exported to MAM',                 &
            UNITS              = 'vv-1',                                &
            DIMS               = MAPL_DimsHorzVert,                     &
            VLOCATION          = MAPL_VLocationCenter,                  &
                                                  __RC__  )
 
      call MAPL_AddExportSpec(GC,                                       &
-           SHORT_NAME         = 'H2SO4_PRDR_MAM',                           &
-           LONG_NAME          = 'SOA exported to MAM',               &
+           SHORT_NAME         = 'SO4_PRDR_MAM',                        &
+           LONG_NAME          = 'SO4 production rate exported to MAM', &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+     
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'NH4_PRDR_MAM',                        &
+           LONG_NAME          = 'NH4 production rate exported to MAM', &
            UNITS              = 'vv-1',                                &
            DIMS               = MAPL_DimsHorzVert,                     &
            VLOCATION          = MAPL_VLocationCenter,                  &
@@ -3222,6 +3230,12 @@ print *, "Equated the pointers"
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
 
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_NH4',   __RC__)
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'NH4_PRDR_MAM',  alloc=.True.,  __RC__ )
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)/tsChem
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+   
     CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_SOAP',   __RC__)
     CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SOA_MAM',  alloc=.True.,  __RC__ )
     Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
@@ -3229,7 +3243,7 @@ print *, "Equated the pointers"
     Ptr3d_R8 => NULL()
 
     CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'H2SO4_PRDR',   __RC__)
-    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'H2SO4_PRDR_MAM',  alloc=.True.,  __RC__ )
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SO4_PRDR_MAM',  alloc=.True.,  __RC__ )
     Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
