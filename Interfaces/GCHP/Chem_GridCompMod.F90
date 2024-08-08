@@ -940,6 +940,15 @@ CONTAINS
 #endif
 
 ! Adding specs for MAM
+
+     call MAPL_AddExportSpec(GC,                                       &
+           SHORT_NAME         = 'SALA_MAM',                            &
+           LONG_NAME          = 'FSS exported to MAM',                 &
+           UNITS              = 'vv-1',                                &
+           DIMS               = MAPL_DimsHorzVert,                     &
+           VLOCATION          = MAPL_VLocationCenter,                  &
+                                                 __RC__  )
+
      call MAPL_AddExportSpec(GC,                                       &
            SHORT_NAME         = 'SO2_MAM',                             &
            LONG_NAME          = 'SO2 exported to MAM',                 &
@@ -3201,14 +3210,16 @@ CONTAINS
 #endif
 
 ! Equating pointers for MAM
-print *, "!Preparing fields for MAM" 
-    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SO2AfterChem',            __RC__ )
-print *, "Got the SO2AfterChem pointer"
-    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SO2_MAM',  alloc=.True.,  __RC__ )
-print *, "Got the SO2_MAM pointer"
+
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_SALA',   __RC__)
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SALA_MAM',  alloc=.True.,  __RC__ )
     Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
-print *, "Equated the pointers"
-    print *, "SO2_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
+    Ptr3d_R4 => NULL()
+    Ptr3d_R8 => NULL()
+
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SO2AfterChem',            __RC__ )
+    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SO2_MAM',  alloc=.True.,  __RC__ )
+    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
 
@@ -3248,33 +3259,21 @@ print *, "Equated the pointers"
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
 
-CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'DELP_DRY',            __RC__ )
-print *, "Got the DELP_DRY pointer"
+    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'DELP_DRY',            __RC__ )
     CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'DELP_MAM',  alloc=.True.,  __RC__ )
-print *, "Got the DELP_MAM pointer"
     Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
-print *, "Equated the pointers"
-    print *, "DELP_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
 
     CALL MAPL_GetPointer( IMPORT, Ptr3d_R8, 'PLE',            __RC__ )
-print *, "Got the PLE pointer"
     CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'PLE_MAM',  alloc=.True.,  __RC__ )
-print *, "Got the PLE_MAM pointer"
     Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
-print *, "Equated the pointers"
-    print *, "PLE_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
 
     CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'AIRDENS',            __RC__ )
-print *, "Got the AIRDENS pointer"
     CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'AIRDENS_MAM',  alloc=.True.,  __RC__ )
-print *, "Got the AIRDENS_MAM pointer"
     Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
-print *, "Equated the pointers"
-    print *, "AIRDENS_MAM", Ptr3d_R4(1,1,1), Ptr3d_R4(1,1,70)
     Ptr3d_R4 => NULL()
     Ptr3d_R8 => NULL()
 
