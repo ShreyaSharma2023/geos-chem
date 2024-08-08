@@ -942,14 +942,6 @@ CONTAINS
 ! Adding specs for MAM
 
      call MAPL_AddExportSpec(GC,                                       &
-           SHORT_NAME         = 'SALA_MAM',                            &
-           LONG_NAME          = 'FSS exported to MAM',                 &
-           UNITS              = 'vv-1',                                &
-           DIMS               = MAPL_DimsHorzVert,                     &
-           VLOCATION          = MAPL_VLocationCenter,                  &
-                                                 __RC__  )
-
-     call MAPL_AddExportSpec(GC,                                       &
            SHORT_NAME         = 'SO2_MAM',                             &
            LONG_NAME          = 'SO2 exported to MAM',                 &
            UNITS              = 'vv-1',                                &
@@ -2552,6 +2544,8 @@ CONTAINS
           State_Chm%Species(Int2Spc(I)%ID)%Conc => Int2Spc(I)%Internal(:,:,State_Grid%NZ:1:-1)
        ENDDO
 
+       SPC_SALA => SS_A_FSS
+
 #ifdef ADJOINT
       IF (Input_Opt%Is_Adjoint) THEN
          DO I = 1, SIZE(Int2Adj,1)
@@ -3210,12 +3204,6 @@ CONTAINS
 #endif
 
 ! Equating pointers for MAM
-
-    CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SPC_SALA',   __RC__)
-    CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SALA_MAM',  alloc=.True.,  __RC__ )
-    Ptr3d_R4(:,:,:) = Ptr3d_R8(:,:,:)
-    Ptr3d_R4 => NULL()
-    Ptr3d_R8 => NULL()
 
     CALL MAPL_GetPointer( INTSTATE, Ptr3d_R8, 'SO2AfterChem',            __RC__ )
     CALL MAPL_GetPointer( EXPORT,   Ptr3d_R4, 'SO2_MAM',  alloc=.True.,  __RC__ )
